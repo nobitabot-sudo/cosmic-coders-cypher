@@ -1,0 +1,6 @@
+{
+  "name": "Cypher Store Builder",
+  "description": "Multi-tenant no-code e-commerce store builder platform with live instant storefronts, onboarding wizard, analytics, and AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
