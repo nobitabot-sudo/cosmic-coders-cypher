@@ -52,13 +52,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [orders, setOrders] = useState<Order[]>(() => getOrdersByStore(store.id));
   const categories = getCategoriesByStore(store.id);
 
-  // Refresh lists
   const reloadData = () => {
     setProducts(getProductsByStore(store.id));
     setOrders(getOrdersByStore(store.id));
   };
 
-  // Products state for add/edit modal
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState({
@@ -72,7 +70,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     description: ''
   });
 
-  // Content form state with rich branding & trust settings
   const [contentForm, setContentForm] = useState({
     name: store.name,
     tagline: store.tagline || 'Crafted with premium materials for everyday excellence.',
@@ -96,13 +93,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const [productSearch, setProductSearch] = useState('');
 
-  // Dashboard metrics
   const totalRevenue = orders
     .filter(o => o.status !== 'CANCELLED')
     .reduce((sum, o) => sum + o.total, 0);
   const lowStockCount = products.filter(p => p.stock <= 10).length;
 
-  // Open Add Product Modal
   const handleOpenAddProduct = () => {
     setEditingProduct(null);
     setProductForm({
@@ -118,7 +113,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     setIsProductModalOpen(true);
   };
 
-  // Open Edit Product Modal
   const handleOpenEditProduct = (prod: Product) => {
     setEditingProduct(prod);
     setProductForm({
@@ -134,7 +128,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     setIsProductModalOpen(true);
   };
 
-  // Save Product (Create or Update)
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
     if (!productForm.name.trim()) {
@@ -176,7 +169,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
   };
 
-  // Delete Product
   const handleDeleteProduct = (prod: Product) => {
     if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
       deleteProduct(prod.id);
@@ -185,7 +177,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
   };
 
-  // Update order status
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
     try {
       updateOrderStatus(orderId, newStatus);
@@ -196,14 +187,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
   };
 
-  // Quick Restock Product
   const handleQuickRestock = (productId: string) => {
     updateProduct(productId, { stock: 30 });
     toast.success('Restocked 30 units!');
     reloadData();
   };
 
-  // Save Content & Branding
   const handleSaveContent = (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -279,6 +268,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-2">
+          {/* 🆕 SHARE LINK BUTTON */}
+          <ShareLinkButton slug={store.slug} />
+
           <button
             onClick={() => onNavigate(`/s/${store.slug}`)}
             className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-indigo-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-indigo-900/50"
@@ -296,34 +288,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
       </aside>
 
-      {/* MOBILE COMPACT TOP APP BAR (52px height) */}
+      {/* MOBILE TOP BAR */}
       <div className="md:hidden bg-slate-950 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 sticky top-0 z-40">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
             {store.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <div className="font-bold text-xs text-white truncate max-w-[170px]">{store.name}</div>
+            <div className="font-bold text-xs text-white truncate max-w-[140px]">{store.name}</div>
             <div className="text-[10px] text-slate-400 font-mono truncate">Admin · {activeTab}</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* 🆕 MOBILE SHARE BUTTON */}
+          <ShareLinkButton slug={store.slug} />
+
           <button
             onClick={() => onNavigate(`/s/${store.slug}`)}
             className="min-h-[36px] px-2.5 py-1 text-xs font-semibold text-indigo-300 bg-indigo-950/70 border border-indigo-800/60 rounded-lg flex items-center gap-1.5 cursor-pointer active:scale-95"
-            title="View Live Store"
           >
-            <span>Store</span>
             <ExternalLink className="w-3 h-3" />
-          </button>
-
-          <button
-            onClick={() => onNavigate('/dashboard')}
-            className="text-[11px] text-slate-400 p-1.5 hover:text-white"
-            title="Switch store"
-          >
-            Stores
           </button>
         </div>
       </div>
@@ -341,6 +326,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
+            <ShareLinkButton slug={store.slug} />
             <button
               onClick={() => onNavigate(`/s/${store.slug}`)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer border border-indigo-200/60"
@@ -352,12 +338,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </header>
 
         <main className="p-3 sm:p-6 lg:p-8 flex-1">
-          {/* TAB 1: DASHBOARD */}
+          {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 sm:space-y-8">
-              {/* 4 Stat Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {/* Total Revenue */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
                   <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-1 sm:mb-2">
                     <span>Revenue</span>
@@ -371,7 +355,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   </span>
                 </div>
 
-                {/* Orders */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
                   <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-1 sm:mb-2">
                     <span>Orders</span>
@@ -385,7 +368,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   </span>
                 </div>
 
-                {/* Products */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
                   <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-1 sm:mb-2">
                     <span>Catalog</span>
@@ -399,7 +381,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   </span>
                 </div>
 
-                {/* Low Stock Alerts */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
                   <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 mb-1 sm:mb-2">
                     <span>Low Stock</span>
@@ -414,9 +395,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
               </div>
 
-              {/* 2 Grid Columns: Recent Orders + Low Stock Alerts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                {/* Recent Orders List */}
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h3 className="font-bold text-sm text-slate-900">Recent Orders</h3>
@@ -468,7 +447,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   )}
                 </div>
 
-                {/* Low Stock Alerts List */}
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6 space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
@@ -529,7 +507,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
           )}
 
-          {/* TAB 2: PRODUCTS PAGE (Mobile Responsive Cards + Desktop Table) */}
+          {/* PRODUCTS TAB */}
           {activeTab === 'products' && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -553,7 +531,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </button>
               </div>
 
-              {/* MOBILE CARDS VIEW (< md screens) */}
               <div className="md:hidden space-y-3">
                 {products
                   .filter(p =>
@@ -597,19 +574,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         </div>
                       </div>
 
-                      {/* Touch Friendly Action Buttons */}
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => handleOpenEditProduct(p)}
                           className="min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-600 hover:text-indigo-600 rounded-lg hover:bg-slate-100 cursor-pointer"
-                          aria-label="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(p)}
                           className="min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-600 hover:text-red-600 rounded-lg hover:bg-slate-100 cursor-pointer"
-                          aria-label="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -618,7 +592,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   ))}
               </div>
 
-              {/* DESKTOP TABLE VIEW (>= md screens) */}
               <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -675,14 +648,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                                 <button
                                   onClick={() => handleOpenEditProduct(p)}
                                   className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer"
-                                  title="Edit Product"
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProduct(p)}
                                   className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
-                                  title="Delete Product"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -697,7 +668,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
           )}
 
-          {/* TAB 3: ORDERS PAGE */}
+          {/* ORDERS TAB */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
               <p className="text-xs text-slate-500">
@@ -736,7 +707,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         </div>
                       </div>
 
-                      {/* Items details */}
                       <div className="bg-slate-50 rounded-xl p-2.5 divide-y divide-slate-200/60">
                         {order.items.map(item => (
                           <div key={item.id} className="py-1.5 flex items-center justify-between text-xs">
@@ -758,7 +728,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         {order.shippingAddress}
                       </div>
 
-                      {/* 5 Status Buttons (Minimum 44px tap target height) */}
                       <div className="pt-2 border-t border-slate-100">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                           Fulfillment Status:
@@ -793,10 +762,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
           )}
 
-          {/* TAB 4: RICH CONTENT, THEME & BRANDING DESIGNER */}
+          {/* CONTENT TAB */}
           {activeTab === 'content' && (
             <form onSubmit={handleSaveContent} className="max-w-4xl space-y-6 sm:space-y-8">
-              {/* 1. REAL-TIME INTERACTIVE LIVE PREVIEW CARD */}
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
                 <div className="bg-slate-900 text-white px-4 sm:px-6 py-3 flex items-center justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2">
@@ -819,7 +787,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         : 'system-ui, sans-serif'
                   }}
                 >
-                  {/* Top Announcement Bar Preview */}
                   {contentForm.announcementEnabled && contentForm.announcementText && (
                     <div
                       className="text-white text-[10px] sm:text-xs py-1.5 px-3 text-center font-bold rounded-lg mb-3 shadow-xs transition-colors"
@@ -829,7 +796,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     </div>
                   )}
 
-                  {/* Header Preview */}
                   <div className="bg-white rounded-xl p-3 sm:p-4 shadow-xs border border-slate-200/80 flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2.5">
                       {contentForm.logo ? (
@@ -867,7 +833,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     </div>
                   </div>
 
-                  {/* Hero Banner Preview */}
                   <div
                     className="rounded-2xl p-4 sm:p-6 text-white mb-4 shadow-sm relative overflow-hidden"
                     style={{
@@ -890,7 +855,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     </p>
                   </div>
 
-                  {/* Mini Product Card Preview */}
                   <div className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 max-w-sm">
                     <div className="flex items-center gap-2.5">
                       <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400">
@@ -912,7 +876,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
               </div>
 
-              {/* 2. 1-CLICK CURATED DESIGNER PALETTES */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-4">
                 <div>
                   <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
@@ -952,14 +915,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <div
-                            className="w-5 h-5 rounded-full border border-black/10 shadow-xs shrink-0"
-                            style={{ backgroundColor: pal.primary }}
-                          />
-                          <div
-                            className="w-5 h-5 rounded-full border border-black/10 shadow-xs shrink-0"
-                            style={{ backgroundColor: pal.accent }}
-                          />
+                          <div className="w-5 h-5 rounded-full border border-black/10 shadow-xs shrink-0" style={{ backgroundColor: pal.primary }} />
+                          <div className="w-5 h-5 rounded-full border border-black/10 shadow-xs shrink-0" style={{ backgroundColor: pal.accent }} />
                         </div>
                         <div className="font-bold text-xs text-slate-900">{pal.name}</div>
                         <div className="text-[10px] text-slate-400 mt-0.5">{pal.desc}</div>
@@ -968,51 +925,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   })}
                 </div>
 
-                {/* Custom Color Pickers */}
                 <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Custom Primary Color
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Custom Primary Color</label>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={contentForm.primaryColor}
-                        onChange={e => setContentForm({ ...contentForm, primaryColor: e.target.value })}
-                        className="w-10 h-10 rounded-xl cursor-pointer border border-slate-300 p-0.5"
-                      />
-                      <input
-                        type="text"
-                        value={contentForm.primaryColor}
-                        onChange={e => setContentForm({ ...contentForm, primaryColor: e.target.value })}
-                        className="w-32 px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold"
-                      />
+                      <input type="color" value={contentForm.primaryColor} onChange={e => setContentForm({ ...contentForm, primaryColor: e.target.value })} className="w-10 h-10 rounded-xl cursor-pointer border border-slate-300 p-0.5" />
+                      <input type="text" value={contentForm.primaryColor} onChange={e => setContentForm({ ...contentForm, primaryColor: e.target.value })} className="w-32 px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
                     </div>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Custom Accent Color
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Custom Accent Color</label>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={contentForm.accentColor}
-                        onChange={e => setContentForm({ ...contentForm, accentColor: e.target.value })}
-                        className="w-10 h-10 rounded-xl cursor-pointer border border-slate-300 p-0.5"
-                      />
-                      <input
-                        type="text"
-                        value={contentForm.accentColor}
-                        onChange={e => setContentForm({ ...contentForm, accentColor: e.target.value })}
-                        className="w-32 px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold"
-                      />
+                      <input type="color" value={contentForm.accentColor} onChange={e => setContentForm({ ...contentForm, accentColor: e.target.value })} className="w-10 h-10 rounded-xl cursor-pointer border border-slate-300 p-0.5" />
+                      <input type="text" value={contentForm.accentColor} onChange={e => setContentForm({ ...contentForm, accentColor: e.target.value })} className="w-32 px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono font-bold" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 3. STORE IDENTITY & ANNOUNCEMENT BAR */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-4">
                 <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
                   📢 Identity & Header Announcements
@@ -1020,27 +950,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Store Brand Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={contentForm.name}
-                      onChange={e => setContentForm({ ...contentForm, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Store Brand Name *</label>
+                    <input type="text" required value={contentForm.name} onChange={e => setContentForm({ ...contentForm, name: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:ring-2 focus:ring-indigo-500" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Business Type
-                    </label>
-                    <select
-                      value={contentForm.businessType}
-                      onChange={e => setContentForm({ ...contentForm, businessType: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white font-medium"
-                    >
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Business Type</label>
+                    <select value={contentForm.businessType} onChange={e => setContentForm({ ...contentForm, businessType: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white font-medium">
                       <option value="Fashion & Apparel">Fashion & Apparel</option>
                       <option value="Electronics & Gadgets">Electronics & Gadgets</option>
                       <option value="Food & Beverages">Food & Beverages</option>
@@ -1054,93 +970,47 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Store Catchphrase / Tagline
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.tagline}
-                      onChange={e => setContentForm({ ...contentForm, tagline: e.target.value })}
-                      placeholder="e.g. Crafted with premium organic cotton for modern everyday style."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Store Catchphrase / Tagline</label>
+                    <input type="text" value={contentForm.tagline} onChange={e => setContentForm({ ...contentForm, tagline: e.target.value })} placeholder="e.g. Crafted with premium organic cotton for modern everyday style." className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
-                  {/* Announcement Bar Toggle & Message */}
                   <div className="sm:col-span-2 p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-xs font-bold text-slate-900 block">
-                          Top Announcement Bar
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          Highlighted strip at the very top of your storefront
-                        </span>
+                        <span className="text-xs font-bold text-slate-900 block">Top Announcement Bar</span>
+                        <span className="text-[11px] text-slate-500">Highlighted strip at the very top of your storefront</span>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={contentForm.announcementEnabled}
-                          onChange={e =>
-                            setContentForm({ ...contentForm, announcementEnabled: e.target.checked })
-                          }
-                          className="sr-only peer"
-                        />
+                        <input type="checkbox" checked={contentForm.announcementEnabled} onChange={e => setContentForm({ ...contentForm, announcementEnabled: e.target.checked })} className="sr-only peer" />
                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                       </label>
                     </div>
 
                     {contentForm.announcementEnabled && (
-                      <input
-                        type="text"
-                        value={contentForm.announcementText}
-                        onChange={e =>
-                          setContentForm({ ...contentForm, announcementText: e.target.value })
-                        }
-                        placeholder="e.g. ⚡ Limited Time Offer: Free express shipping across India!"
-                        className="w-full px-3 py-2 bg-white rounded-lg border border-slate-300 text-xs font-medium"
-                      />
+                      <input type="text" value={contentForm.announcementText} onChange={e => setContentForm({ ...contentForm, announcementText: e.target.value })} placeholder="e.g. ⚡ Limited Time Offer: Free express shipping across India!" className="w-full px-3 py-2 bg-white rounded-lg border border-slate-300 text-xs font-medium" />
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* 4. VISUAL MEDIA & BANNER PRESETS */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-4">
                 <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
                   🖼️ Visual Media & Banners
                 </h3>
 
                 <div className="space-y-4">
-                  {/* Logo */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Store Logo Image URL
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Store Logo Image URL</label>
                     <div className="flex items-center gap-3">
                       {contentForm.logo && (
-                        <img
-                          src={contentForm.logo}
-                          alt=""
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
-                          onError={e => (e.currentTarget.style.display = 'none')}
-                        />
+                        <img src={contentForm.logo} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" onError={e => (e.currentTarget.style.display = 'none')} />
                       )}
-                      <input
-                        type="text"
-                        value={contentForm.logo}
-                        onChange={e => setContentForm({ ...contentForm, logo: e.target.value })}
-                        placeholder="https://..."
-                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono"
-                      />
+                      <input type="text" value={contentForm.logo} onChange={e => setContentForm({ ...contentForm, logo: e.target.value })} placeholder="https://..." className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" />
                     </div>
                   </div>
 
-                  {/* Banner Presets */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Hero Banner Presets (Click to use)
-                    </label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Hero Banner Presets (Click to use)</label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
                       {[
                         { name: 'Urban Apparel', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1400&q=80' },
@@ -1165,18 +1035,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                       ))}
                     </div>
 
-                    <input
-                      type="text"
-                      value={contentForm.banner}
-                      onChange={e => setContentForm({ ...contentForm, banner: e.target.value })}
-                      placeholder="Or enter custom banner URL: https://..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono"
-                    />
+                    <input type="text" value={contentForm.banner} onChange={e => setContentForm({ ...contentForm, banner: e.target.value })} placeholder="Or enter custom banner URL: https://..." className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" />
                   </div>
                 </div>
               </div>
 
-              {/* 5. TYPOGRAPHY */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-3">
                 <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
                   ✍️ Typography Font Family
@@ -1191,14 +1054,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <input
-                        type="radio"
-                        name="fontFamily"
-                        value={font}
-                        checked={contentForm.fontFamily === font}
-                        onChange={() => setContentForm({ ...contentForm, fontFamily: font })}
-                        className="sr-only"
-                      />
+                      <input type="radio" name="fontFamily" value={font} checked={contentForm.fontFamily === font} onChange={() => setContentForm({ ...contentForm, fontFamily: font })} className="sr-only" />
                       <span
                         className="font-bold text-xs sm:text-sm block"
                         style={{
@@ -1220,7 +1076,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
               </div>
 
-              {/* 6. TRUST, OPERATING HOURS & CONTACT */}
               <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-4">
                 <h3 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
                   🛡️ Trust, Support & Store Hours
@@ -1228,110 +1083,47 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Customer Support Email *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={contentForm.email}
-                      onChange={e => setContentForm({ ...contentForm, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Customer Support Email *</label>
+                    <input type="email" required value={contentForm.email} onChange={e => setContentForm({ ...contentForm, email: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Support Phone Number *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={contentForm.phone}
-                      onChange={e => setContentForm({ ...contentForm, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Support Phone Number *</label>
+                    <input type="text" required value={contentForm.phone} onChange={e => setContentForm({ ...contentForm, phone: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      WhatsApp Support Number
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.socialWhatsapp}
-                      onChange={e => setContentForm({ ...contentForm, socialWhatsapp: e.target.value })}
-                      placeholder="+91 98765 43210"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">WhatsApp Support Number</label>
+                    <input type="text" value={contentForm.socialWhatsapp} onChange={e => setContentForm({ ...contentForm, socialWhatsapp: e.target.value })} placeholder="+91 98765 43210" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Instagram Handle
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.socialInstagram}
-                      onChange={e => setContentForm({ ...contentForm, socialInstagram: e.target.value })}
-                      placeholder="@yourbrand"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Instagram Handle</label>
+                    <input type="text" value={contentForm.socialInstagram} onChange={e => setContentForm({ ...contentForm, socialInstagram: e.target.value })} placeholder="@yourbrand" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Store Operating Hours
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.openingHours}
-                      onChange={e => setContentForm({ ...contentForm, openingHours: e.target.value })}
-                      placeholder="Mon - Sat: 10:00 AM - 8:30 PM"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Store Operating Hours</label>
+                    <input type="text" value={contentForm.openingHours} onChange={e => setContentForm({ ...contentForm, openingHours: e.target.value })} placeholder="Mon - Sat: 10:00 AM - 8:30 PM" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Return & Guarantee Policy Notice
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.returnPolicyNotice}
-                      onChange={e => setContentForm({ ...contentForm, returnPolicyNotice: e.target.value })}
-                      placeholder="7 Days easy return and instant replacement guarantee"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Return & Guarantee Policy Notice</label>
+                    <input type="text" value={contentForm.returnPolicyNotice} onChange={e => setContentForm({ ...contentForm, returnPolicyNotice: e.target.value })} placeholder="7 Days easy return and instant replacement guarantee" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Store Physical Address
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={contentForm.address}
-                      onChange={e => setContentForm({ ...contentForm, address: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Store Physical Address</label>
+                    <textarea rows={2} value={contentForm.address} onChange={e => setContentForm({ ...contentForm, address: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Footer Text / Copyright Disclaimer
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={contentForm.footerText}
-                      onChange={e => setContentForm({ ...contentForm, footerText: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Footer Text / Copyright Disclaimer</label>
+                    <textarea rows={2} value={contentForm.footerText} onChange={e => setContentForm({ ...contentForm, footerText: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium" />
                   </div>
                 </div>
               </div>
 
-              {/* SAVE BUTTON */}
               <div className="sticky bottom-16 md:bottom-6 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-xl flex items-center justify-between gap-4">
                 <div className="hidden sm:block text-xs text-slate-500 font-medium">
                   Changes will instantly update your live storefront at <span className="font-mono text-indigo-600 font-bold">/s/{store.slug}</span>
@@ -1350,7 +1142,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </main>
       </div>
 
-      {/* MOBILE FIXED BOTTOM NAVIGATION BAR FOR ADMIN */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950 text-white border-t border-slate-800 h-16 flex items-center justify-around px-2 shadow-xl">
         {navLinks.map(link => {
           const Icon = link.icon;
@@ -1371,7 +1163,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           );
         })}
 
-        {/* 5th button: Live Store */}
         <button
           onClick={() => onNavigate(`/s/${store.slug}`)}
           className="flex flex-col items-center justify-center w-14 h-full text-amber-400 hover:text-amber-300 cursor-pointer"
@@ -1381,7 +1172,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </button>
       </nav>
 
-      {/* ADD / EDIT PRODUCT MODAL */}
+      {/* PRODUCT MODAL */}
       {isProductModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[88vh] overflow-y-auto">
@@ -1389,39 +1180,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <h3 className="font-bold text-base text-slate-900">
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </h3>
-              <button
-                onClick={() => setIsProductModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
+              <button onClick={() => setIsProductModalOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveProduct} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={productForm.name}
-                  onChange={e => setProductForm({ ...productForm, name: e.target.value })}
-                  placeholder="e.g. Heavyweight Cotton Hoodie"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Product Name *</label>
+                <input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} placeholder="e.g. Heavyweight Cotton Hoodie" className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-medium" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Category *
-                  </label>
-                  <select
-                    value={productForm.categoryId}
-                    onChange={e => setProductForm({ ...productForm, categoryId: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs bg-white"
-                  >
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
+                  <select value={productForm.categoryId} onChange={e => setProductForm({ ...productForm, categoryId: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs bg-white">
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -1429,98 +1202,41 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    SKU Code
-                  </label>
-                  <input
-                    type="text"
-                    value={productForm.sku}
-                    onChange={e => setProductForm({ ...productForm, sku: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-mono"
-                  />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">SKU Code</label>
+                  <input type="text" value={productForm.sku} onChange={e => setProductForm({ ...productForm, sku: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-mono" />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div>
-                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">
-                    Price (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={productForm.price}
-                    onChange={e => setProductForm({ ...productForm, price: Number(e.target.value) })}
-                    className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs font-bold"
-                  />
+                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">Price (₹) *</label>
+                  <input type="number" required min={0} value={productForm.price} onChange={e => setProductForm({ ...productForm, price: Number(e.target.value) })} className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs font-bold" />
                 </div>
-
                 <div>
-                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">
-                    Compare (₹)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={productForm.comparePrice}
-                    onChange={e => setProductForm({ ...productForm, comparePrice: Number(e.target.value) })}
-                    className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs"
-                  />
+                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">Compare (₹)</label>
+                  <input type="number" min={0} value={productForm.comparePrice} onChange={e => setProductForm({ ...productForm, comparePrice: Number(e.target.value) })} className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs" />
                 </div>
-
                 <div>
-                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">
-                    Stock *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={productForm.stock}
-                    onChange={e => setProductForm({ ...productForm, stock: Number(e.target.value) })}
-                    className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs font-bold"
-                  />
+                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1">Stock *</label>
+                  <input type="number" required min={0} value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: Number(e.target.value) })} className="w-full px-2.5 py-2.5 rounded-lg border border-slate-300 text-xs font-bold" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Product Image URL
-                </label>
-                <input
-                  type="text"
-                  value={productForm.image}
-                  onChange={e => setProductForm({ ...productForm, image: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-mono"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Product Image URL</label>
+                <input type="text" value={productForm.image} onChange={e => setProductForm({ ...productForm, image: e.target.value })} placeholder="https://..." className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs font-mono" />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={productForm.description}
-                  onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                <textarea rows={2} value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs" />
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsProductModalOpen(false)}
-                  className="min-h-[44px] px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
-                >
+                <button type="button" onClick={() => setIsProductModalOpen(false)} className="min-h-[44px] px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer"
-                >
+                <button type="submit" className="min-h-[44px] px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer">
                   {editingProduct ? 'Save Changes' : 'Create Product'}
                 </button>
               </div>
@@ -1529,7 +1245,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
       )}
 
-      {/* AI ASSISTANT FLOATING WIDGET (Optimized for Mobile Bottom Drawer) */}
       <AIChatbot storeId={store.id} storeName={store.name} />
     </div>
   );
