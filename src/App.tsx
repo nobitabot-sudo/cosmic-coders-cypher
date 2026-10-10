@@ -7,6 +7,7 @@ import { Storefront } from './components/Storefront';
 import { CartPage } from './components/CartPage';
 import { CheckoutPage } from './components/CheckoutPage';
 import { AdminLayout } from './components/AdminLayout';
+import { syncFromFirestore } from './lib/storage';
 import {
   getCurrentUser,
   getStoreBySlug,
