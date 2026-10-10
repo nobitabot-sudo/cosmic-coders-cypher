@@ -3,7 +3,7 @@
 Multi-tenant no-code e-commerce platform. MSW Cypher Problem 1.
 
 ## 🔗 Live Demo
-https://cosmic-coders-cypher.vercel.app/
+https://cosmic-coders-cypher-7gy3.vercel.app/
 
 ## 🔑 Demo Login
 - **Email:** owner@demo.com
