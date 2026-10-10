@@ -1,4 +1,6 @@
 import { Store, Product, Category, Order, User, Membership, CartItem, OrderStatus } from '../types';
+import { db } from './firebase';
+import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import {
   DEMO_USER,
   DEMO_STORE,
@@ -19,10 +21,105 @@ const STORAGE_KEYS = {
   INITIALIZED: 'cypher_initialized_v1'
 };
 
-// Seed initial database if empty
-function initializeStorageIfNeeded() {
+const FIRESTORE_SYNCED = 'cypher_firestore_synced_v2';
+
+/* ================= FIRESTORE SYNC LAYER ================= */
+
+// Push single document to Firestore (background, no await needed for UI)
+async function pushDoc(collectionName: string, item: any, docId?: string) {
+  try {
+    const id = docId || item?.id;
+    if (!id) return;
+    const { id: _, ...data } = item;
+    const cleanData = JSON.parse(JSON.stringify(data, (k, v) => v === undefined ? null : v));
+    await setDoc(doc(db, collectionName, id), cleanData, { merge: true });
+  } catch (err) {
+    console.error(`Firestore write failed for ${collectionName}:`, err);
+  }
+}
+
+async function removeDoc(collectionName: string, id: string) {
+  try {
+    await deleteDoc(doc(db, collectionName, id));
+  } catch (err) {
+    console.error(`Firestore delete failed for ${collectionName}/${id}:`, err);
+  }
+}
+
+// Called on app startup - fetch everything from Firestore into localStorage
+export async function syncFromFirestore(): Promise<void> {
   if (typeof window === 'undefined') return;
 
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const storesSnap = await getDocs(collection(db, 'stores'));
+    const membershipsSnap = await getDocs(collection(db, 'memberships'));
+    const categoriesSnap = await getDocs(collection(db, 'categories'));
+    const productsSnap = await getDocs(collection(db, 'products'));
+    const ordersSnap = await getDocs(collection(db, 'orders'));
+
+    // If Firestore has data, use it
+    if (!storesSnap.empty) {
+      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const stores = storesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const memberships = membershipsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const categories = categoriesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const products = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const orders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify(stores));
+      localStorage.setItem(STORAGE_KEYS.MEMBERSHIPS, JSON.stringify(memberships));
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+      localStorage.setItem(FIRESTORE_SYNCED, 'true');
+      console.log('✓ Synced from Firestore');
+      return;
+    }
+
+    // Firestore is empty - seed it with demo data
+    console.log('Firestore empty - seeding demo data...');
+    await seedFirestore();
+  } catch (err) {
+    console.error('Firestore sync failed, falling back to localStorage:', err);
+    // Continue with localStorage fallback
+    initializeStorageIfNeeded();
+  }
+}
+
+// Seed demo data into BOTH Firestore and localStorage
+async function seedFirestore() {
+  try {
+    await Promise.all([
+      ...DEMO_CATEGORIES.map(c => pushDoc('categories', c)),
+      ...DEMO_PRODUCTS.map(p => pushDoc('products', p)),
+      ...DEMO_ORDERS.map(o => pushDoc('orders', o)),
+      pushDoc('users', DEMO_USER),
+      pushDoc('stores', DEMO_STORE),
+      pushDoc('memberships', DEMO_MEMBERSHIP, `${DEMO_MEMBERSHIP.userId}_${DEMO_MEMBERSHIP.storeId}`),
+    ]);
+
+    // Also populate localStorage
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([DEMO_USER]));
+    localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify([DEMO_STORE]));
+    localStorage.setItem(STORAGE_KEYS.MEMBERSHIPS, JSON.stringify([DEMO_MEMBERSHIP]));
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEMO_CATEGORIES));
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEMO_PRODUCTS));
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(DEMO_ORDERS));
+    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+    localStorage.setItem(FIRESTORE_SYNCED, 'true');
+    console.log('✓ Seeded Firestore with demo data');
+  } catch (err) {
+    console.error('Firestore seed failed:', err);
+  }
+}
+
+/* ================= LOCAL STORAGE LAYER ================= */
+
+function initializeStorageIfNeeded() {
+  if (typeof window === 'undefined') return;
   const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
   if (!initialized) {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([DEMO_USER]));
@@ -36,7 +133,6 @@ function initializeStorageIfNeeded() {
   }
 }
 
-// Helpers
 function getList<T>(key: string): T[] {
   initializeStorageIfNeeded();
   try {
@@ -87,6 +183,10 @@ export function signup(name: string, email: string, password: string): User {
   users.push(newUser);
   setList(STORAGE_KEYS.USERS, users);
   localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(newUser));
+
+  // Firestore (background)
+  pushDoc('users', newUser);
+
   return newUser;
 }
 
@@ -157,7 +257,6 @@ export function createStore(
   const allCategories = getList<Category>(STORAGE_KEYS.CATEGORIES);
   const allProducts = getList<Product>(STORAGE_KEYS.PRODUCTS);
 
-  // Check unique slug
   let uniqueSlug = storeData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
   let counter = 1;
   while (stores.some(s => s.slug.toLowerCase() === uniqueSlug)) {
@@ -179,15 +278,14 @@ export function createStore(
   stores.push(newStore);
   setList(STORAGE_KEYS.STORES, stores);
 
-  // Create membership
-  memberships.push({
+  const newMembership: Membership = {
     userId: ownerId,
     storeId,
     role: 'OWNER'
-  });
+  };
+  memberships.push(newMembership);
   setList(STORAGE_KEYS.MEMBERSHIPS, memberships);
 
-  // Create categories
   const createdCategories: Category[] = categories.map((cat, idx) => ({
     id: `cat_${storeId}_${idx + 1}`,
     storeId,
@@ -197,7 +295,6 @@ export function createStore(
   allCategories.push(...createdCategories);
   setList(STORAGE_KEYS.CATEGORIES, allCategories);
 
-  // Attach products
   const categoryMap = new Map(createdCategories.map(c => [c.name.toLowerCase(), c.id]));
   const formattedProducts = products.map((p, idx) => ({
     ...p,
@@ -207,6 +304,12 @@ export function createStore(
   }));
   allProducts.push(...formattedProducts);
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
+
+  // Firestore sync (background)
+  pushDoc('stores', newStore);
+  pushDoc('memberships', newMembership, `${ownerId}_${storeId}`);
+  createdCategories.forEach(c => pushDoc('categories', c));
+  formattedProducts.forEach(p => pushDoc('products', p));
 
   return newStore;
 }
@@ -226,6 +329,9 @@ export function updateStore(storeId: string, updates: Partial<Store>): Store {
 
   stores[index] = updated;
   setList(STORAGE_KEYS.STORES, stores);
+
+  pushDoc('stores', updated);
+
   return updated;
 }
 
@@ -249,6 +355,9 @@ export function addCategory(storeId: string, name: string): Category {
 
   allCategories.push(newCat);
   setList(STORAGE_KEYS.CATEGORIES, allCategories);
+
+  pushDoc('categories', newCat);
+
   return newCat;
 }
 
@@ -304,6 +413,9 @@ export function createProduct(storeId: string, data: Partial<Product>): Product 
 
   allProducts.push(newProd);
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
+
+  pushDoc('products', newProd);
+
   return newProd;
 }
 
@@ -330,6 +442,9 @@ export function updateProduct(id: string, updates: Partial<Product>): Product {
 
   allProducts[index] = updated;
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
+
+  pushDoc('products', updated);
+
   return updated;
 }
 
@@ -337,6 +452,8 @@ export function deleteProduct(id: string): void {
   const allProducts = getList<Product>(STORAGE_KEYS.PRODUCTS);
   const filtered = allProducts.filter(p => p.id !== id);
   setList(STORAGE_KEYS.PRODUCTS, filtered);
+
+  removeDoc('products', id);
 }
 
 /* ================= ORDERS ================= */
@@ -368,13 +485,19 @@ export function createOrder(
 
   // Decrement product stock
   const allProducts = getList<Product>(STORAGE_KEYS.PRODUCTS);
+  const updatedProducts: Product[] = [];
   for (const item of newOrder.items) {
     const prodIdx = allProducts.findIndex(p => p.id === item.productId && p.storeId === storeId);
     if (prodIdx !== -1) {
       allProducts[prodIdx].stock = Math.max(0, allProducts[prodIdx].stock - item.qty);
+      updatedProducts.push(allProducts[prodIdx]);
     }
   }
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
+
+  // Firestore sync (background)
+  pushDoc('orders', newOrder);
+  updatedProducts.forEach(p => pushDoc('products', p));
 
   return newOrder;
 }
@@ -388,10 +511,13 @@ export function updateOrderStatus(orderId: string, status: OrderStatus): Order {
 
   allOrders[index].status = status;
   setList(STORAGE_KEYS.ORDERS, allOrders);
+
+  pushDoc('orders', allOrders[index]);
+
   return allOrders[index];
 }
 
-/* ================= CART STORAGE (cart_[slug]) ================= */
+/* ================= CART STORAGE ================= */
 
 export function getCart(slug: string): CartItem[] {
   if (typeof window === 'undefined') return [];
