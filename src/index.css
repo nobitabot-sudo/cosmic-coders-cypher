@@ -1,20 +1,143 @@
 @import "tailwindcss";
 
-/* ================= PREMIUM ANIMATIONS ================= */
+/* ================= FONTS ================= */
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-14px) rotate(1deg); }
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-@keyframes float-slow {
+body {
+  font-family: var(--font-sans);
+  background: #faf9f6;
+  color: #0a0a0a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif { font-family: var(--font-serif); }
+.font-mono { font-family: var(--font-mono); }
+
+/* ================= GRAIN TEXTURE ================= */
+
+.grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ================= GRID LINES ================= */
+
+.grid-lines {
+  background-image:
+    linear-gradient(to right, rgba(10, 10, 10, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(10, 10, 10, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.dot-grid {
+  background-image: radial-gradient(rgba(10, 10, 10, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ================= HEADLINE STYLE ================= */
+
+.headline {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+.headline em {
+  font-style: italic;
+  color: #b45309;
+}
+
+/* ================= LABEL (small caps mono) ================= */
+
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #78716c;
+}
+
+/* ================= UNDERLINE HOVER ================= */
+
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #0a0a0a;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ================= SUBTLE FADE IN ================= */
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  animation: reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.3s; }
+.reveal-delay-4 { animation-delay: 0.4s; }
+
+/* ================= MARQUEE ================= */
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee {
+  animation: marquee 40s linear infinite;
+}
+
+/* ================= FLOAT (subtle) ================= */
+
+@keyframes float-subtle {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+  50% { transform: translateY(-6px); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 24px rgba(5, 150, 105, 0.35); }
-  50% { box-shadow: 0 0 44px rgba(217, 119, 6, 0.5); }
+.animate-float-subtle {
+  animation: float-subtle 6s ease-in-out infinite;
+}
+
+/* ================= SKELETON ================= */
+
+.skeleton {
+  background: linear-gradient(90deg, #f0efeb 25%, #e7e5e0 50%, #f0efeb 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
@@ -22,208 +145,36 @@
   100% { background-position: 1000px 0; }
 }
 
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes blob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes ping-slow {
-  75%, 100% { transform: scale(2); opacity: 0; }
-}
-
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-/* ================= ANIMATION UTILITIES ================= */
-
-.animate-float { animation: float 5s ease-in-out infinite; }
-.animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
-.animate-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
-.animate-spin-slow { animation: spin-slow 20s linear infinite; }
-.animate-blob { animation: blob 8s ease-in-out infinite; }
-.animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
-.animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
-.animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
-
-/* ================= SKELETON LOADER ================= */
-
-.skeleton {
-  background: linear-gradient(90deg, #f5f5f4 25%, #e7e5e4 50%, #f5f5f4 75%);
-  background-size: 1000px 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* ================= GRADIENT TEXT (Emerald → Amber) ================= */
-
-.gradient-text {
-  background: linear-gradient(135deg, #059669 0%, #0d9488 45%, #d97706 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient-shift 5s ease infinite;
-  display: inline-block;
-}
-
-/* ================= GLASSMORPHISM CARD ================= */
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 32px rgba(5, 150, 105, 0.08);
-}
-
-/* ================= GRADIENT BUTTON (Solid Emerald) ================= */
-
-.btn-gradient {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transition: all 0.3s ease;
-}
-
-.btn-gradient:hover {
-  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.35);
-}
-
-.btn-gradient:active {
-  transform: translateY(0);
-}
-
-/* Amber accent button */
-.btn-amber {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  transition: all 0.3s ease;
-}
-
-.btn-amber:hover {
-  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(217, 119, 6, 0.35);
-}
-
-/* ================= GRID PATTERN (Emerald tint) ================= */
-
-.grid-pattern {
-  background-image:
-    linear-gradient(rgba(5, 150, 105, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(5, 150, 105, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* ================= DOT PATTERN ================= */
-
-.dot-pattern {
-  background-image: radial-gradient(rgba(5, 150, 105, 0.1) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-/* ================= GLOW EFFECTS ================= */
-
-.glow-emerald {
-  box-shadow: 0 0 40px rgba(5, 150, 105, 0.35);
-}
-
-.glow-amber {
-  box-shadow: 0 0 40px rgba(217, 119, 6, 0.35);
-}
-
-/* ================= SMOOTH SCROLL ================= */
+/* ================= SCROLLBAR ================= */
 
 html { scroll-behavior: smooth; }
 
-/* ================= CUSTOM SCROLLBAR (Emerald) ================= */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #faf9f6; }
+::-webkit-scrollbar-thumb { background: #d6d3cd; border-radius: 5px; border: 2px solid #faf9f6; }
+::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f5f5f4;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #34d399, #059669);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #059669, #047857);
-}
-
-/* ================= FOCUS RINGS (Emerald) ================= */
+/* ================= FOCUS ================= */
 
 *:focus-visible {
-  outline: 2px solid #059669;
+  outline: 2px solid #0a0a0a;
   outline-offset: 2px;
 }
 
-/* ================= BASE ================= */
-
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #fdfcf9;
-  color: #1c1917;
-}
-
-/* ================= SELECTION ================= */
-
 ::selection {
-  background: #059669;
-  color: white;
+  background: #0a0a0a;
+  color: #faf9f6;
 }
 
 /* ================= TEXT BALANCE ================= */
 
-.text-balance {
-  text-wrap: balance;
-}
-
-/* ================= 3D PERSPECTIVE HELPERS ================= */
-
-.perspective-1000 { perspective: 1000px; }
-.preserve-3d { transform-style: preserve-3d; }
-.backface-hidden { backface-visibility: hidden; }
-
-/* ================= MOBILE TWEAKS ================= */
-
-@media (max-width: 640px) {
-  .animate-blob { animation-duration: 10s; }
-}
+.text-balance { text-wrap: balance; }
 
 /* ================= REDUCED MOTION ================= */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }
