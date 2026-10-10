@@ -21,9 +21,13 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [added, setAdded] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const isOutOfStock = product.stock === 0;
   const isLowStock = product.stock > 0 && product.stock < 10;
+
+  const FALLBACK_IMAGE =
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80';
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (window.matchMedia('(pointer: coarse)').matches) return;
@@ -86,7 +90,9 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
         onMouseLeave={handleMouseLeave}
         style={{
           transform: isHovered
-            ? `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.03, 1.03, 1.03)`
+            ? `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(
+                2
+              )}deg) scale3d(1.03, 1.03, 1.03)`
             : 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
           transition: isHovered
             ? 'transform 0.1s ease-out, box-shadow 0.15s ease-out'
@@ -94,7 +100,7 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
           transformStyle: 'preserve-3d',
           boxShadow: isHovered
             ? `${rotateX * 1.5}px ${-rotateY * 1.5}px 40px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(99, 102, 241, 0.1)`
-            : undefined,
+            : undefined
         }}
         className={`relative flex flex-col h-full bg-white rounded-2xl overflow-hidden border transition-colors duration-200 cursor-pointer active:scale-[0.98] ${
           isHovered ? 'border-indigo-300/70' : 'border-slate-200/90'
@@ -106,40 +112,47 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
           style={{
             opacity: isHovered ? 1 : 0,
             background: `linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0.15) 55%, transparent 70%)`,
-            transform: `translateX(${rotateX * 2}px) translateY(${rotateY * 2}px)`,
+            transform: `translateX(${rotateX * 2}px) translateY(${rotateY * 2}px)`
           }}
         />
 
         {/* Product Image Container */}
         <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.name}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
-              isHovered ? 'scale-110' : 'scale-100'
-            } ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
-            onError={(e) => {
-              const target = e.currentTarget;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent && !parent.querySelector('.img-fallback')) {
-                const fallback = document.createElement('div');
-                fallback.className = 'img-fallback absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-3 text-center';
-                fallback.innerHTML = `
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 opacity-60">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="9" cy="9" r="2" />
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                  </svg>
-                  <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">${product.categoryName || 'Item'}</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">${product.name}</span>
-                `;
-                parent.appendChild(fallback);
-              }
-            }}
-          />
+          {!imageError ? (
+            <img
+              src={product.image || FALLBACK_IMAGE}
+              alt={product.name}
+              loading="lazy"
+              referrerPolicy="origin"
+              crossOrigin="anonymous"
+              onError={() => setImageError(true)}
+              className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+                isHovered ? 'scale-110' : 'scale-100'
+              } ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 p-3 text-center">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="mb-2 opacity-60"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                {product.categoryName || 'Item'}
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                {product.name}
+              </span>
+            </div>
+          )}
 
           {/* Gradient overlay on hover (bottom) */}
           <div
@@ -178,7 +191,11 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
               liked
                 ? 'bg-rose-500 text-white scale-105'
                 : 'bg-white/90 text-slate-500 hover:bg-white hover:scale-110'
-            } ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
+            } ${
+              isHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-2 pointer-events-none'
+            }`}
           >
             <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
           </button>
@@ -191,7 +208,9 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
                 onQuickView(product);
               }}
               className={`absolute bottom-2 right-2 z-10 px-3 h-8 rounded-full flex items-center gap-1.5 text-[11px] font-semibold bg-white/95 text-slate-800 hover:bg-white backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-sm ${
-                isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+                isHovered
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-2 pointer-events-none'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -240,10 +259,12 @@ export const ProductCard3D: React.FC<ProductCard3DProps> = ({
                   ? '#cbd5e1'
                   : added
                   ? '#16a34a'
-                  : store.primaryColor || '#0f172a',
+                  : store.primaryColor || '#0f172a'
               }}
               className={`w-full sm:w-auto min-h-[40px] sm:min-h-[36px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white rounded-xl transition-all duration-200 active:scale-95 shadow-sm hover:shadow-md cursor-pointer ${
-                isOutOfStock ? 'cursor-not-allowed opacity-60' : 'hover:brightness-110'
+                isOutOfStock
+                  ? 'cursor-not-allowed opacity-60'
+                  : 'hover:brightness-110'
               }`}
             >
               {added ? (
