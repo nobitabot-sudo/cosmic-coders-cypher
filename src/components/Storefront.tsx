@@ -6,6 +6,14 @@ import {
   getCart,
   saveCart
 } from '../lib/storage';
+import {
+  whatsappLink,
+  telLink,
+  mailtoLink,
+  instagramLink,
+  isValidPhone,
+  isValidEmail
+} from '../lib/contact';
 import { ProductCard3D } from './ProductCard3D';
 import {
   ShoppingBag,
@@ -13,6 +21,10 @@ import {
   MapPin,
   Mail,
   Phone,
+  MessageCircle,
+  Instagram,
+  Clock,
+  Shield,
   SlidersHorizontal,
   X,
   ExternalLink,
@@ -40,7 +52,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
   const products = useMemo(() => getProductsByStore(store.id), [store.id]);
   const categories = useMemo(() => getCategoriesByStore(store.id), [store.id]);
 
-  // Total cart items count and total value
   const totalCartCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.qty, 0);
   }, [cartItems]);
@@ -49,7 +60,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
     return cartItems.reduce((sum, item) => sum + item.product.price * item.qty, 0);
   }, [cartItems]);
 
-  // Filter products by search and category
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       if (!p.isActive) return false;
@@ -66,7 +76,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
     });
   }, [products, selectedCategory, searchQuery]);
 
-  // Add to cart handler
   const handleAddToCart = (product: Product) => {
     const current = getCart(store.slug);
     const existingIndex = current.findIndex(i => i.product.id === product.id);
@@ -93,6 +102,13 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
       ? 'font-mono'
       : 'font-sans';
 
+  // Pre-compute contact links
+  const phoneWhatsApp = store.socialWhatsapp || store.phone;
+  const waLink = whatsappLink(phoneWhatsApp, `Hi ${store.name}, I have a question about your store.`);
+  const callLink = telLink(store.phone);
+  const emailLink = mailtoLink(store.email, `Question about ${store.name}`);
+  const instaLink = instagramLink(store.socialInstagram);
+
   return (
     <div
       className={`min-h-screen bg-slate-50 text-slate-900 flex flex-col pb-24 md:pb-0 ${fontClass}`}
@@ -107,13 +123,13 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
             : 'system-ui, sans-serif'
       }}
     >
-      {/* Top Banner Bar - Dynamic Announcement */}
+      {/* Top Announcement Bar */}
       {store.announcementEnabled !== false && (
         <div
           className="text-[11px] sm:text-xs py-1.5 px-3 text-center font-medium shadow-xs transition-colors"
           style={{
-            backgroundColor: store.announcementBgColor || store.primaryColor || '#0f172a',
-            color: store.announcementTextColor || '#ffffff'
+            backgroundColor: store.primaryColor || '#0f172a',
+            color: '#ffffff'
           }}
         >
           <span>{store.announcementText || '⚡ Free Express Delivery on orders over ₹999 · Cash on Delivery Available'}</span>
@@ -123,7 +139,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
       {/* Main Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-20 flex items-center justify-between gap-3">
-          {/* Brand Logo & Name */}
           <div
             onClick={() => onNavigate(`/s/${store.slug}`)}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer shrink-0 min-w-0"
@@ -132,11 +147,9 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
               <img
                 src={store.logo}
                 alt={store.name}
-                referrerPolicy="no-referrer"
+                referrerPolicy="origin"
                 className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl object-cover bg-slate-100 shadow-xs shrink-0"
-                onError={e => {
-                  e.currentTarget.style.display = 'none';
-                }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
               />
             ) : null}
             <div className="min-w-0">
@@ -149,7 +162,7 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
             </div>
           </div>
 
-          {/* Search Bar (desktop) */}
+          {/* Desktop Search */}
           <div className="hidden md:flex flex-1 max-w-md mx-6">
             <div className="relative w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -171,13 +184,10 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
             </div>
           </div>
 
-          {/* Actions: Mobile search trigger & Cart Button */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Search icon trigger for mobile */}
             <button
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
               className="md:hidden min-h-[40px] min-w-[40px] flex items-center justify-center p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
-              aria-label="Toggle search"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -185,7 +195,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
             <button
               onClick={() => onNavigate(`/admin/${store.slug}`)}
               className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-              title="Go to Admin Panel"
             >
               <span>Manage Store</span>
               <ExternalLink className="w-3 h-3 text-slate-400" />
@@ -210,7 +219,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
           </div>
         </div>
 
-        {/* Mobile Search Expandable Bar */}
         {isMobileSearchOpen && (
           <div className="md:hidden px-4 pb-3 pt-1 border-t border-slate-100 bg-white">
             <div className="relative w-full">
@@ -236,14 +244,14 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         )}
       </header>
 
-      {/* Hero Banner Section (Optimized for Mobile Height) */}
+      {/* Hero */}
       <section className="relative overflow-hidden bg-slate-900 text-white">
         {store.banner ? (
           <div className="absolute inset-0 z-0">
             <img
               src={store.banner}
               alt=""
-              referrerPolicy="no-referrer"
+              referrerPolicy="origin"
               className="w-full h-full object-cover opacity-35"
             />
             <div
@@ -271,50 +279,68 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
               {store.businessType}
             </span>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              {store.heroHeadline || store.name}
+              {store.name}
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-slate-200 leading-relaxed max-w-xl">
               {store.tagline || store.footerText || `Discover handcrafted ${store.businessType.toLowerCase()} with pan-India express delivery.`}
             </p>
 
-            {/* Quick Action Buttons on Hero */}
             <div className="mt-4 flex items-center gap-2.5 flex-wrap">
               <a
                 href="#catalog"
                 style={{ backgroundColor: store.accentColor || '#f59e0b', color: '#0f172a' }}
                 className="px-4 py-2 rounded-xl text-xs font-extrabold shadow-sm hover:opacity-95 transition-opacity"
               >
-                {store.heroCtaText || 'Explore Catalog'}
+                Explore Catalog
               </a>
 
-              {store.socialWhatsapp && (
+              {/* WhatsApp Hero Button - NOW WORKING */}
+              {waLink && (
                 <a
-                  href={`https://wa.me/${store.socialWhatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm browsing your online store ${store.name}!`)}`}
+                  href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-emerald-700 transition-colors"
                 >
-                  <span>💬 WhatsApp Us</span>
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp Us</span>
                 </a>
               )}
             </div>
           </div>
 
+          {/* Hero contact card - CLICKABLE */}
           <div className="hidden sm:flex flex-col gap-2">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3.5 rounded-xl text-xs text-white/90 space-y-1">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                <span className="line-clamp-1">{store.address || 'Pan-India Delivery'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                <span>{store.phone}</span>
-              </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3.5 rounded-xl text-xs text-white/90 space-y-2">
+              {store.address && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span className="line-clamp-1">{store.address}</span>
+                </div>
+              )}
+              {callLink && (
+                <a
+                  href={callLink}
+                  className="flex items-center gap-2 hover:text-amber-300 transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>{store.phone}</span>
+                </a>
+              )}
+              {emailLink && (
+                <a
+                  href={emailLink}
+                  className="flex items-center gap-2 hover:text-amber-300 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span className="truncate max-w-[200px]">{store.email}</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Trust Badges Strip */}
+        {/* Trust Badges */}
         <div className="relative z-10 bg-black/30 backdrop-blur-xs border-t border-white/10 py-2 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 text-[11px] sm:text-xs text-white/90 overflow-x-auto no-scrollbar whitespace-nowrap">
             <div className="flex items-center gap-1.5 shrink-0">
@@ -334,9 +360,8 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         </div>
       </section>
 
-      {/* Main Catalog Section */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10">
-        {/* Category Filters Bar (Horizontal Touch Swipe on Mobile) */}
+      {/* Catalog */}
+      <main id="catalog" className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10">
         <div className="mb-6 overflow-x-auto pb-2 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -375,7 +400,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
           </div>
         </div>
 
-        {/* Product Grid (2 cols mobile, 4 cols desktop) */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredProducts.map(product => (
@@ -410,7 +434,7 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         )}
       </main>
 
-      {/* QUICK VIEW BOTTOM SHEET MODAL (Touch Friendly) */}
+      {/* Quick View Modal */}
       {quickViewProduct && (
         <div
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -420,7 +444,6 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
             className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4"
             onClick={e => e.stopPropagation()}
           >
-            {/* Sheet Handle for Mobile */}
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto sm:hidden -mt-1 mb-2" />
 
             <div className="flex items-start justify-between gap-3">
@@ -444,7 +467,9 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
               <img
                 src={quickViewProduct.image}
                 alt={quickViewProduct.name}
+                referrerPolicy="origin"
                 className="w-full h-full object-cover"
+                onError={e => { e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80'; }}
               />
             </div>
 
@@ -503,7 +528,7 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         </div>
       )}
 
-      {/* MOBILE FLOATING CART ACTION BAR (Thumb Zone Natural Reach) */}
+      {/* Mobile Floating Cart Bar */}
       {totalCartCount > 0 && (
         <div className="md:hidden fixed bottom-14 left-0 right-0 z-30 p-3 pointer-events-none">
           <div
@@ -534,7 +559,7 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         </div>
       )}
 
-      {/* MOBILE BOTTOM NAVIGATION BAR (iOS / Android Standard Pattern) */}
+      {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 h-14 flex items-center justify-around px-2 shadow-lg">
         <button
           onClick={() => {
@@ -581,43 +606,175 @@ export const Storefront: React.FC<StorefrontProps> = ({ store, onNavigate }) => 
         </button>
       </nav>
 
-      {/* Desktop Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-auto hidden md:block">
+      {/* ================= FOOTER (MOBILE + DESKTOP) ================= */}
+      <footer className="bg-white border-t border-slate-200 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-600">
+          {/* Grid: 3 cols desktop, stacked mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Column 1: Store Info */}
             <div>
-              <h4 className="font-bold text-slate-900 text-sm tracking-tight mb-2">
-                {store.name}
+              <div className="flex items-center gap-3 mb-3">
+                {store.logo ? (
+                  <img
+                    src={store.logo}
+                    alt=""
+                    referrerPolicy="origin"
+                    className="w-10 h-10 rounded-xl object-cover bg-slate-100"
+                    onError={e => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: store.primaryColor || '#0f172a' }}
+                  >
+                    {store.name.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">{store.name}</h3>
+                  {store.businessType && (
+                    <p className="text-[11px] text-slate-500">{store.businessType}</p>
+                  )}
+                </div>
+              </div>
+
+              {store.tagline && (
+                <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                  {store.tagline}
+                </p>
+              )}
+
+              {store.returnPolicyNotice && (
+                <div className="flex items-start gap-2 text-[11px] text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-100">
+                  <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{store.returnPolicyNotice}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Column 2: Contact - CLICKABLE */}
+            <div>
+              <h4 className="font-bold text-[11px] uppercase tracking-wider text-slate-900 mb-3">
+                Contact Us
               </h4>
-              <p className="leading-relaxed text-slate-500">
-                {store.footerText || 'Official online store powered by Cypher Store Builder.'}
-              </p>
-            </div>
-            <div>
-              <div className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2">
-                Store Location
+              <div className="space-y-2.5">
+                {/* WhatsApp */}
+                {waLink && (
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 text-xs text-slate-700 hover:text-[#25D366] transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 group-hover:bg-[#25D366]/20 flex items-center justify-center shrink-0 transition-colors">
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">WhatsApp</div>
+                      <div className="text-[10px] text-slate-500">Chat with us</div>
+                    </div>
+                  </a>
+                )}
+
+                {/* Phone */}
+                {callLink && (
+                  <a
+                    href={callLink}
+                    className="flex items-center gap-3 text-xs text-slate-700 hover:text-indigo-600 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center shrink-0 transition-colors">
+                      <Phone className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Call us</div>
+                      <div className="text-[10px] text-slate-500">{store.phone}</div>
+                    </div>
+                  </a>
+                )}
+
+                {/* Email */}
+                {emailLink && (
+                  <a
+                    href={emailLink}
+                    className="flex items-center gap-3 text-xs text-slate-700 hover:text-indigo-600 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center shrink-0 transition-colors">
+                      <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold">Email</div>
+                      <div className="text-[10px] text-slate-500 truncate max-w-[180px]">{store.email}</div>
+                    </div>
+                  </a>
+                )}
+
+                {/* Instagram */}
+                {instaLink && (
+                  <a
+                    href={instaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 text-xs text-slate-700 hover:text-pink-600 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-pink-50 group-hover:bg-pink-100 flex items-center justify-center shrink-0 transition-colors">
+                      <Instagram className="w-3.5 h-3.5 text-pink-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Instagram</div>
+                      <div className="text-[10px] text-slate-500">{store.socialInstagram}</div>
+                    </div>
+                  </a>
+                )}
+
+                {/* Fallback if no contacts */}
+                {!waLink && !callLink && !emailLink && !instaLink && (
+                  <p className="text-[11px] text-slate-400 italic">
+                    Contact details not added yet.
+                  </p>
+                )}
               </div>
-              <p className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                <span>{store.address}</span>
-              </p>
             </div>
+
+            {/* Column 3: Visit */}
             <div>
-              <div className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2">
-                Contact & Support
+              <h4 className="font-bold text-[11px] uppercase tracking-wider text-slate-900 mb-3">
+                Visit Us
+              </h4>
+              <div className="space-y-2.5">
+                {store.address && (
+                  <div className="flex items-start gap-3 text-xs text-slate-700">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                      <MapPin className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <div className="text-[11px] text-slate-600 leading-relaxed pt-1">
+                      {store.address}
+                    </div>
+                  </div>
+                )}
+
+                {store.openingHours && (
+                  <div className="flex items-start gap-3 text-xs text-slate-700">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                    </div>
+                    <div className="text-[11px] text-slate-600 pt-1">
+                      {store.openingHours}
+                    </div>
+                  </div>
+                )}
+
+                {!store.address && !store.openingHours && (
+                  <p className="text-[11px] text-slate-400 italic">
+                    No location info added yet.
+                  </p>
+                )}
               </div>
-              <p className="flex items-center gap-2 mb-1">
-                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>{store.email}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>{store.phone}</span>
-              </p>
             </div>
           </div>
-          <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-            <div>© {new Date().getFullYear()} {store.name}. All rights reserved.</div>
+
+          {/* Bottom bar */}
+          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
+            <div>{store.footerText || `© ${new Date().getFullYear()} ${store.name}. All rights reserved.`}</div>
             <div className="font-semibold text-slate-600">Powered by Cypher Store Builder</div>
           </div>
         </div>
