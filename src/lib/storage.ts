@@ -196,7 +196,6 @@ export function login(email: string, password: string): User {
     throw new Error('Invalid email or password.');
   }
 
-  // Only demo user has the shortcut password
   const isDemoAccount = normalizedEmail === 'owner@demo.com' && password === 'demo123';
   const isCorrectPassword = user.passwordHash === password;
 
@@ -224,19 +223,17 @@ export function getStoresForUser(userId: string): Store[] {
   const memberships = getList<Membership>(STORAGE_KEYS.MEMBERSHIPS);
   const stores = getList<Store>(STORAGE_KEYS.STORES);
 
-  // Strict filter: membership must match userId AND have a storeId
   const userStoreIds = new Set(
     memberships
       .filter(m => m && m.userId === userId && m.storeId)
       .map(m => m.storeId)
   );
 
-  // Return only stores the user is a member of
   return stores.filter(s => s && s.id && userStoreIds.has(s.id));
 }
 
 /**
- * NEW: Convenience wrapper — gets current user's stores.
+ * Convenience wrapper — gets current user's stores.
  */
 export function getMyStores(): Store[] {
   const user = getCurrentUser();
@@ -245,7 +242,7 @@ export function getMyStores(): Store[] {
 }
 
 /**
- * NEW: Checks if the current user owns/has access to a store.
+ * Checks if the current user owns/has access to a store.
  */
 export function isStoreOwner(userId: string, storeId: string): boolean {
   if (!userId || !storeId) return false;
@@ -363,6 +360,60 @@ export function updateStore(storeId: string, updates: Partial<Store>): Store {
   pushDoc('stores', updated);
 
   return updated;
+}
+
+/**
+ * NEW: Delete a store and ALL its related data.
+ * Only the OWNER can delete their own store.
+ */
+export function deleteStore(storeId: string, userId: string): void {
+  if (!storeId || !userId) {
+    throw new Error('Store ID and User ID required');
+  }
+
+  const memberships = getList<Membership>(STORAGE_KEYS.MEMBERSHIPS);
+  const membership = memberships.find(m => m.storeId === storeId && m.userId === userId);
+
+  if (!membership) {
+    throw new Error('UNAUTHORIZED: You do not have access to this store');
+  }
+
+  if (membership.role !== 'OWNER') {
+    throw new Error('Only the owner can delete this store');
+  }
+
+  // 1. Remove store
+  const stores = getList<Store>(STORAGE_KEYS.STORES);
+  setList(STORAGE_KEYS.STORES, stores.filter(s => s.id !== storeId));
+
+  // 2. Remove memberships
+  setList(STORAGE_KEYS.MEMBERSHIPS, memberships.filter(m => m.storeId !== storeId));
+
+  // 3. Remove categories
+  const categories = getList<Category>(STORAGE_KEYS.CATEGORIES);
+  const storeCategories = categories.filter(c => c.storeId === storeId);
+  setList(STORAGE_KEYS.CATEGORIES, categories.filter(c => c.storeId !== storeId));
+
+  // 4. Remove products
+  const products = getList<Product>(STORAGE_KEYS.PRODUCTS);
+  const storeProducts = products.filter(p => p.storeId === storeId);
+  setList(STORAGE_KEYS.PRODUCTS, products.filter(p => p.storeId !== storeId));
+
+  // 5. Remove orders
+  const orders = getList<Order>(STORAGE_KEYS.ORDERS);
+  const storeOrders = orders.filter(o => o.storeId === storeId);
+  setList(STORAGE_KEYS.ORDERS, orders.filter(o => o.storeId !== storeId));
+
+  // 6. Delete from Firestore (background)
+  removeDoc('stores', storeId);
+  memberships
+    .filter(m => m.storeId === storeId)
+    .forEach(m => removeDoc('memberships', `${m.userId}_${m.storeId}`));
+  storeCategories.forEach(c => removeDoc('categories', c.id));
+  storeProducts.forEach(p => removeDoc('products', p.id));
+  storeOrders.forEach(o => removeDoc('orders', o.id));
+
+  console.log(`✓ Deleted store ${storeId} and all related data`);
 }
 
 /* ================= CATEGORIES ================= */
