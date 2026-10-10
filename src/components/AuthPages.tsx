@@ -6,7 +6,8 @@ import {
   logout,
   getStoresForUser,
   getProductsByStore,
-  getOrdersByStore
+  getOrdersByStore,
+  deleteStore
 } from '../lib/storage';
 import { Store, User } from '../types';
 import {
@@ -21,7 +22,9 @@ import {
   ShoppingCart,
   TrendingUp,
   LogOut,
-  Sparkles
+  Sparkles,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -93,7 +96,6 @@ export const LoginPage: React.FC<AuthPageProps> = ({ onNavigate, onAuthSuccess }
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-white py-8 px-6 shadow-sm border border-slate-200/90 rounded-2xl space-y-6">
-          {/* Quick Demo Login Preset Button */}
           <button
             type="button"
             onClick={handleDemoLogin}
@@ -275,6 +277,14 @@ export const SignupPage: React.FC<AuthPageProps> = ({ onNavigate, onAuthSuccess 
 /* ================= DASHBOARD PAGE (/dashboard) ================= */
 export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => getCurrentUser());
+  const [storeToDelete, setStoreToDelete] = useState<{
+    id: string;
+    name: string;
+    slug: string;
+    productCount: number;
+    orderCount: number;
+  } | null>(null);
+
   const stores = currentUser ? getStoresForUser(currentUser.id) : [];
 
   const handleLogout = () => {
@@ -282,6 +292,20 @@ export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     setCurrentUser(null);
     toast.success('Signed out safely.');
     onNavigate('/login');
+  };
+
+  const confirmDelete = () => {
+    if (!storeToDelete || !currentUser) return;
+
+    try {
+      deleteStore(storeToDelete.id, currentUser.id);
+      toast.success(`"${storeToDelete.name}" deleted successfully.`);
+      setStoreToDelete(null);
+      // Refresh page to show updated list
+      setTimeout(() => window.location.reload(), 400);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete store');
+    }
   };
 
   return (
@@ -353,11 +377,31 @@ export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={store.id}
-                  className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                  className="relative bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between group"
                 >
+                  {/* Delete Button (top-right) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setStoreToDelete({
+                        id: store.id,
+                        name: store.name,
+                        slug: store.slug,
+                        productCount: storeProducts.length,
+                        orderCount: storeOrders.length,
+                      });
+                    }}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-xs z-10 cursor-pointer"
+                    title="Delete store"
+                    aria-label="Delete store"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+
                   <div>
                     {/* Store Header */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-start justify-between gap-3 mb-4 pr-8">
                       <div className="flex items-center gap-3">
                         {store.logo ? (
                           <img
@@ -382,16 +426,6 @@ export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
                           </span>
                         </div>
                       </div>
-
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
-                        style={{
-                          backgroundColor: `${store.primaryColor}1A`,
-                          color: store.primaryColor
-                        }}
-                      >
-                        {store.businessType}
-                      </span>
                     </div>
 
                     {/* Stats pills */}
@@ -439,7 +473,7 @@ export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
             })}
           </div>
         ) : (
-          /* Empty state: "No stores yet. Create your first store in 2 minutes." */
+          /* Empty state */
           <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center max-w-lg mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4">
               <StoreIcon className="w-8 h-8" />
@@ -458,6 +492,77 @@ export const DashboardPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
           </div>
         )}
       </main>
+
+      {/* ================= DELETE CONFIRMATION MODAL ================= */}
+      {storeToDelete && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setStoreToDelete(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Delete store?</h3>
+                <p className="text-sm text-slate-600">
+                  You're about to permanently delete{' '}
+                  <b className="text-slate-900">"{storeToDelete.name}"</b>
+                </p>
+              </div>
+            </div>
+
+            {/* Warning Box */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
+              <div className="text-xs font-bold text-red-800 mb-2 flex items-center gap-1.5">
+                <span>⚠️</span> This will permanently delete:
+              </div>
+              <ul className="text-xs text-red-700 space-y-1 ml-5">
+                <li>
+                  •{' '}
+                  <b>{storeToDelete.productCount}</b>{' '}
+                  product{storeToDelete.productCount !== 1 ? 's' : ''}
+                </li>
+                <li>
+                  •{' '}
+                  <b>{storeToDelete.orderCount}</b>{' '}
+                  order{storeToDelete.orderCount !== 1 ? 's' : ''}
+                </li>
+                <li>• All categories and store settings</li>
+                <li>
+                  • Live URL:{' '}
+                  <b className="font-mono">/s/{storeToDelete.slug}</b>
+                </li>
+              </ul>
+              <div className="text-xs text-red-800 mt-3 font-semibold">
+                ⛔ This action cannot be undone.
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setStoreToDelete(null)}
+                className="px-4 py-2.5 text-sm font-semibold text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Store
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
