@@ -37,7 +37,7 @@ https://cosmic-coders-cypher.vercel.app
 - **Deploy:** Vercel
 
 ## 🏗️ Architecture
-[Architecture diagram image]
+![Architecture](./architecture.png)
 
 ## 🚀 Deploy
 1. Vercel pe repo connect
