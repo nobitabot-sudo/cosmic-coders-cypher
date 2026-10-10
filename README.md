@@ -5,9 +5,6 @@ Multi-tenant no-code e-commerce platform. MSW Cypher Problem 1.
 ## 🔗 Live Demo
 https://cosmic-coders-cypher.vercel.app
 
-## 🎬 Demo Video
-[YouTube unlisted link]
-
 ## 🔑 Demo Login
 - **Email:** owner@demo.com
 - **Password:** demo123
