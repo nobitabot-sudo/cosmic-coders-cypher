@@ -30,6 +30,25 @@ export default function App() {
   // Track active store in state
   const [activeStore, setActiveStore] = useState<Store | null>(null);
 
+  // 🔥 NEW: Sync from Firestore on app startup + trigger re-render after sync
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    syncFromFirestore()
+      .then(() => {
+        if (!mounted) return;
+        console.log('✓ Firestore sync complete');
+        setSynced(true);
+        // Refresh current user from updated localStorage
+        setCurrentUser(getCurrentUser());
+      })
+      .catch((err) => {
+        console.error('Firestore sync failed, using localStorage:', err);
+        if (mounted) setSynced(true);
+      });
+    return () => { mounted = false; };
+  }, []);
+
   // Sync route on popstate
   useEffect(() => {
     const handlePopState = () => {
@@ -212,6 +231,19 @@ export default function App() {
     // Default fallback to LandingPage
     return <LandingPage onNavigate={navigate} />;
   };
+
+  // 🔥 NEW: Show loading screen until first Firestore sync completes
+  if (!synced) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+          <div className="text-sm text-slate-600 font-medium">Loading your store data...</div>
+          <div className="text-xs text-slate-400">Syncing with database</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
