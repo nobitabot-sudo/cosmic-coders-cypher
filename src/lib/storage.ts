@@ -25,7 +25,6 @@ const FIRESTORE_SYNCED = 'cypher_firestore_synced_v2';
 
 /* ================= FIRESTORE SYNC LAYER ================= */
 
-// Push single document to Firestore (background, no await needed for UI)
 async function pushDoc(collectionName: string, item: any, docId?: string) {
   try {
     const id = docId || item?.id;
@@ -46,7 +45,6 @@ async function removeDoc(collectionName: string, id: string) {
   }
 }
 
-// Called on app startup - fetch everything from Firestore into localStorage
 export async function syncFromFirestore(): Promise<void> {
   if (typeof window === 'undefined') return;
 
@@ -58,7 +56,6 @@ export async function syncFromFirestore(): Promise<void> {
     const productsSnap = await getDocs(collection(db, 'products'));
     const ordersSnap = await getDocs(collection(db, 'orders'));
 
-    // If Firestore has data, use it
     if (!storesSnap.empty) {
       const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const stores = storesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -79,17 +76,14 @@ export async function syncFromFirestore(): Promise<void> {
       return;
     }
 
-    // Firestore is empty - seed it with demo data
     console.log('Firestore empty - seeding demo data...');
     await seedFirestore();
   } catch (err) {
     console.error('Firestore sync failed, falling back to localStorage:', err);
-    // Continue with localStorage fallback
     initializeStorageIfNeeded();
   }
 }
 
-// Seed demo data into BOTH Firestore and localStorage
 async function seedFirestore() {
   try {
     await Promise.all([
@@ -101,7 +95,6 @@ async function seedFirestore() {
       pushDoc('memberships', DEMO_MEMBERSHIP, `${DEMO_MEMBERSHIP.userId}_${DEMO_MEMBERSHIP.storeId}`),
     ]);
 
-    // Also populate localStorage
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([DEMO_USER]));
     localStorage.setItem(STORAGE_KEYS.STORES, JSON.stringify([DEMO_STORE]));
     localStorage.setItem(STORAGE_KEYS.MEMBERSHIPS, JSON.stringify([DEMO_MEMBERSHIP]));
@@ -173,7 +166,7 @@ export function signup(name: string, email: string, password: string): User {
   }
 
   const newUser: User = {
-    id: `usr_${Date.now()}`,
+    id: `usr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     email: normalizedEmail,
     name: name.trim(),
     passwordHash: password,
@@ -184,21 +177,30 @@ export function signup(name: string, email: string, password: string): User {
   setList(STORAGE_KEYS.USERS, users);
   localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(newUser));
 
-  // Firestore (background)
   pushDoc('users', newUser);
 
   return newUser;
 }
 
+/**
+ * FIXED: Only the demo account can use 'demo123'.
+ * All other users must use their real password.
+ */
 export function login(email: string, password: string): User {
   const users = getList<User>(STORAGE_KEYS.USERS);
   const normalizedEmail = email.trim().toLowerCase();
 
-  const user = users.find(
-    u => u.email.toLowerCase() === normalizedEmail && (u.passwordHash === password || password === 'demo123')
-  );
+  const user = users.find(u => u.email.toLowerCase() === normalizedEmail);
 
   if (!user) {
+    throw new Error('Invalid email or password.');
+  }
+
+  // Only demo user has the shortcut password
+  const isDemoAccount = normalizedEmail === 'owner@demo.com' && password === 'demo123';
+  const isCorrectPassword = user.passwordHash === password;
+
+  if (!isDemoAccount && !isCorrectPassword) {
     throw new Error('Invalid email or password.');
   }
 
@@ -212,18 +214,47 @@ export function logout(): void {
 
 /* ================= STORES & MEMBERSHIPS ================= */
 
+/**
+ * Returns stores that this specific user has access to.
+ * STRICT: Only returns stores where a matching membership exists.
+ */
 export function getStoresForUser(userId: string): Store[] {
+  if (!userId) return [];
+
   const memberships = getList<Membership>(STORAGE_KEYS.MEMBERSHIPS);
   const stores = getList<Store>(STORAGE_KEYS.STORES);
 
+  // Strict filter: membership must match userId AND have a storeId
   const userStoreIds = new Set(
-    memberships.filter(m => m.userId === userId).map(m => m.storeId)
+    memberships
+      .filter(m => m && m.userId === userId && m.storeId)
+      .map(m => m.storeId)
   );
 
-  return stores.filter(s => userStoreIds.has(s.id));
+  // Return only stores the user is a member of
+  return stores.filter(s => s && s.id && userStoreIds.has(s.id));
+}
+
+/**
+ * NEW: Convenience wrapper — gets current user's stores.
+ */
+export function getMyStores(): Store[] {
+  const user = getCurrentUser();
+  if (!user || !user.id) return [];
+  return getStoresForUser(user.id);
+}
+
+/**
+ * NEW: Checks if the current user owns/has access to a store.
+ */
+export function isStoreOwner(userId: string, storeId: string): boolean {
+  if (!userId || !storeId) return false;
+  const memberships = getList<Membership>(STORAGE_KEYS.MEMBERSHIPS);
+  return memberships.some(m => m.userId === userId && m.storeId === storeId);
 }
 
 export function getStoreBySlug(slug: string): Store | null {
+  if (!slug) return null;
   const stores = getList<Store>(STORAGE_KEYS.STORES);
   return stores.find(s => s.slug.toLowerCase() === slug.toLowerCase()) || null;
 }
@@ -264,7 +295,7 @@ export function createStore(
     counter++;
   }
 
-  const storeId = `str_${Date.now()}`;
+  const storeId = `str_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const now = new Date().toISOString();
 
   const newStore: Store = {
@@ -305,7 +336,6 @@ export function createStore(
   allProducts.push(...formattedProducts);
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
 
-  // Firestore sync (background)
   pushDoc('stores', newStore);
   pushDoc('memberships', newMembership, `${ownerId}_${storeId}`);
   createdCategories.forEach(c => pushDoc('categories', c));
@@ -338,6 +368,7 @@ export function updateStore(storeId: string, updates: Partial<Store>): Store {
 /* ================= CATEGORIES ================= */
 
 export function getCategoriesByStore(storeId: string): Category[] {
+  if (!storeId) return [];
   const allCategories = getList<Category>(STORAGE_KEYS.CATEGORIES);
   return allCategories.filter(c => c.storeId === storeId);
 }
@@ -364,6 +395,7 @@ export function addCategory(storeId: string, name: string): Category {
 /* ================= PRODUCTS ================= */
 
 export function getProductsByStore(storeId: string): Product[] {
+  if (!storeId) return [];
   const allProducts = getList<Product>(STORAGE_KEYS.PRODUCTS);
   const categories = getCategoriesByStore(storeId);
   const catMap = new Map(categories.map(c => [c.id, c.name]));
@@ -459,6 +491,7 @@ export function deleteProduct(id: string): void {
 /* ================= ORDERS ================= */
 
 export function getOrdersByStore(storeId: string): Order[] {
+  if (!storeId) return [];
   const allOrders = getList<Order>(STORAGE_KEYS.ORDERS);
   return allOrders
     .filter(o => o.storeId === storeId)
@@ -474,7 +507,7 @@ export function createOrder(
 
   const newOrder: Order = {
     ...orderData,
-    id: `ord_${Date.now()}`,
+    id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     storeId,
     orderNumber,
     createdAt: new Date().toISOString()
@@ -483,7 +516,6 @@ export function createOrder(
   allOrders.unshift(newOrder);
   setList(STORAGE_KEYS.ORDERS, allOrders);
 
-  // Decrement product stock
   const allProducts = getList<Product>(STORAGE_KEYS.PRODUCTS);
   const updatedProducts: Product[] = [];
   for (const item of newOrder.items) {
@@ -495,7 +527,6 @@ export function createOrder(
   }
   setList(STORAGE_KEYS.PRODUCTS, allProducts);
 
-  // Firestore sync (background)
   pushDoc('orders', newOrder);
   updatedProducts.forEach(p => pushDoc('products', p));
 
