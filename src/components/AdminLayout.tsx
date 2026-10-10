@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Store, Product, Order, OrderStatus } from '../types';
+import { ShareLinkButton } from './ShareLinkButton';
 import {
   getProductsByStore,
   getOrdersByStore,
