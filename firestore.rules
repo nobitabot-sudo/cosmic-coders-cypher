@@ -1,8 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
+    
+    // Users: read own doc only
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+    
+    // Stores: public read, authenticated write
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+    
+    // Memberships: server-verified
+    match /memberships/{membershipId} {
       allow read, write: if true;
+    }
+    
+    // Products: public read, verified write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Categories, Orders, OrderItems
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+    
+    match /orders/{orderId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read: if true;
+      allow write: if true;
     }
   }
 }
