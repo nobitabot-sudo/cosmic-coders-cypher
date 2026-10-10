@@ -3,75 +3,6 @@
 /* ================= PREMIUM ANIMATIONS ================= */
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
-  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-}
-
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 1000px 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient-shift 3s ease infinite;
-}
-
-/* Smooth scrolling */
-html { scroll-behavior: smooth; }
-
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Better focus rings */
-*:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-}
-
-/* ================= PREMIUM ANIMATIONS ================= */
-
-@keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-14px) rotate(1deg); }
 }
@@ -112,12 +43,27 @@ html { scroll-behavior: smooth; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes ping-slow {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ================= ANIMATION UTILITIES ================= */
+
 .animate-float { animation: float 5s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
 .animate-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 20s linear infinite; }
 .animate-blob { animation: blob 8s ease-in-out infinite; }
 .animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
+.animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+
+/* ================= SKELETON LOADER ================= */
 
 .skeleton {
   background: linear-gradient(90deg, #eef2ff 25%, #e0e7ff 50%, #eef2ff 75%);
@@ -125,7 +71,8 @@ html { scroll-behavior: smooth; }
   animation: shimmer 1.5s infinite;
 }
 
-/* Gradient text */
+/* ================= GRADIENT TEXT ================= */
+
 .gradient-text {
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 45%, #ec4899 100%);
   background-size: 200% 200%;
@@ -133,9 +80,11 @@ html { scroll-behavior: smooth; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradient-shift 4s ease infinite;
+  display: inline-block;
 }
 
-/* Glassmorphism card */
+/* ================= GLASSMORPHISM CARD ================= */
+
 .glass-card {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(20px);
@@ -144,7 +93,8 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
 }
 
-/* Gradient button base */
+/* ================= GRADIENT BUTTON ================= */
+
 .btn-gradient {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   background-size: 200% 200%;
@@ -157,7 +107,12 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 12px 28px rgba(99, 102, 241, 0.35);
 }
 
-/* Grid pattern background */
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ================= GRID PATTERN BACKGROUND ================= */
+
 .grid-pattern {
   background-image:
     linear-gradient(rgba(99, 102, 241, 0.06) 1px, transparent 1px),
@@ -165,17 +120,111 @@ html { scroll-behavior: smooth; }
   background-size: 40px 40px;
 }
 
-/* Smooth scroll */
-html { scroll-behavior: smooth; }
+/* ================= DOT PATTERN BACKGROUND ================= */
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #818cf8, #a78bfa); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #6366f1, #8b5cf6); }
+.dot-pattern {
+  background-image: radial-gradient(rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
 
-/* Focus rings */
+/* ================= GLOW EFFECTS ================= */
+
+.glow-indigo {
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+}
+
+.glow-purple {
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
+}
+
+/* ================= SMOOTH SCROLL ================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ================= CUSTOM SCROLLBAR ================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #818cf8, #a78bfa);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+}
+
+/* ================= FOCUS RINGS ================= */
+
 *:focus-visible {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
+}
+
+/* ================= BASE ================= */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ================= SELECTION ================= */
+
+::selection {
+  background: #6366f1;
+  color: white;
+}
+
+/* ================= TEXT BALANCE ================= */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ================= 3D PERSPECTIVE HELPERS ================= */
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* ================= MOBILE TWEAKS ================= */
+
+@media (max-width: 640px) {
+  .animate-blob {
+    animation-duration: 10s;
+  }
+}
+
+/* ================= REDUCED MOTION ================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
