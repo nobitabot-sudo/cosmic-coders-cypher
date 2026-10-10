@@ -40,11 +40,11 @@ https://cosmic-coders-cypher.vercel.app
 ![Architecture](./architecture.png)
 
 ## 🚀 Deploy
-1. Vercel pe repo connect
-2. Env vars add karo (see `.env.example`)
+1. Repo connect on vercel
+2. Add env vars  (see `.env.example`)
 3. Auto-deploy on push
 
 ## 🔐 Multi-tenant Security
-- Har query storeId se filter hoti hai
+- Every query is filtered from storeId 
 - Server-side user verification before chatbot queries
 - Chatbot read-only, cross-store access denied
